@@ -257,7 +257,7 @@ def draw(i, observations):
 robot = Robot(0,0,0)      # ロボットを原点に
 
 # 観測、描画、移動の繰り返し
-for i in range(0,18):
+for i in range(0,3):
     obss = robot.observation(actual_landmarks)
     draw(i,obss)
     robot.move(0.2,math.pi / 180.0 * 20)
