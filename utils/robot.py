@@ -10,27 +10,24 @@ class Robot(object):
     def __init__(self, pose: list[float] = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100):
         """
         Args:
-            x_region : x range of simulation 2D field.
-            y_region : The second parameter.
-            N_landmark: number of landmarks.
-        Returns:
-            bool: set of range sensor value.
+            pose: initial pose of robot.
+            x_region,y_region : robot movement area (prefer to be same as range of simulation 2D field.)
         """
-        # To Do
+        # ToDo
         # 上位クラスの属性(環境の範囲)を条件式に含むValueErrorは設定できるか？
         # Simulation クラスのx_regionとy_regionから外れた場所にロボット位置が来たら、エラーを出すor移動操作をうけないようにしたい。
         self._x_restriction = x_region / 2
         self._y_restriction = y_region / 2
 
         self.pose = Pose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
-        self.range_sensor = Sensor(range_min=0, range_max=3.5)
+        self.range_sensor = Sensor(range_min=0, range_max=50)
 
         self.linear_speed_min = 0.1
         self.linear_speed_max = 10.0
         self.angular_speed_min = 1.0 * math.pi / 180.0
         self.angular_speed_max = 30.0 * math.pi / 180.0
 
-        self._odometry = Odometry()
+        self._odometry = Odometry(self.pose)
 
     def move_forward(self, counter: int = 1):
         linear_speed = counter * self.linear_speed_min
@@ -40,7 +37,7 @@ class Robot(object):
         self.pose.x += linear_speed * math.cos(self.pose.theta)
         self.pose.y += linear_speed * math.sin(self.pose.theta)
 
-        self._odometry.update(linear_speed * math.cos(self.pose.theta), linear_speed * math.sin(self.pose.theta),0.0)
+        self._odometry.update(self.pose)
 
     def move_backward(self, counter: int = 1):
         linear_speed = counter * self.linear_speed_min
@@ -50,7 +47,7 @@ class Robot(object):
         self.pose.x -= linear_speed * math.cos(self.pose.theta)
         self.pose.y -= linear_speed * math.sin(self.pose.theta)
 
-        self._odometry.update(-linear_speed * math.cos(self.pose.theta), -linear_speed * math.sin(self.pose.theta),0.0)
+        self._odometry.update(self.pose)
 
     def turn_left(self, counter: int = 1):
         angular_speed = counter * self.angular_speed_min
@@ -59,7 +56,7 @@ class Robot(object):
 
         self.pose.theta += angular_speed
 
-        self._odometry.update(0.0, 0.0,angular_speed)
+        self._odometry.update(self.pose)
 
     def turn_right(self, counter: int = 1):
         angular_speed = counter * self.angular_speed_min
@@ -68,11 +65,11 @@ class Robot(object):
 
         self.pose.theta -= angular_speed
 
-        self._odometry.update(0.0, 0.0,-angular_speed)
+        self._odometry.update(self.pose)
 
     def return_odometry(self):
         return_odomertry = copy.deepcopy(self._odometry)
-        self._odometry.__init__()
+        self._odometry.__init__(self.pose)
         return return_odomertry
 
     def _observe_landmarks(self):
@@ -144,21 +141,21 @@ class Sensor():
 
         self.distance_range_max = range_max
         self.distance_range_min = range_min
-        self.angular_range = angular_range * math.pi / 180.0
 
-        self.distance_range_noise_stddev = 0.0
-        self.angular_range_noise_stddev = 0.0
+        angular_range = angular_range * math.pi / 180.0
+        self.angle_range_min = -angular_range / 2
+        self.angle_range_max = angular_range / 2
+
+        self.distance_noise_stddev = 0.0
+        self.angular_noise_stddev = 0.0
 
 class Odometry:
-    def __init__(self):
-        self.delta_x: float = 0.0
-        self.delta_y: float = 0.0
-        self.delta_theta: float = 0.0
+    def __init__(self,pose):
+        self.previous_pose = copy.deepcopy(pose)
+        self.current_pose = pose
 
     def __str__(self):
-        return f'({self.delta_x}, {self.delta_y}, {self.delta_theta})'
+        return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x-self.previous_pose.x, self.current_pose.y-self.previous_pose.y, self.current_pose.theta-self.previous_pose.theta)
 
-    def update(self, delta_x: float, delta_y: float, delta_theta: float):
-        self.delta_x += delta_x
-        self.delta_y += delta_y
-        self.delta_theta += delta_theta
+    def update(self, pose):
+        self.current_pose = pose
