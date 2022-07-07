@@ -1,13 +1,16 @@
 import math
 import copy
 
+from typing import List
+
+
 class Robot(object):
     """
     Class that holds attributes of the robot pose,sensor specs and motion specs.
     and provides methods of operate atoribute avabu.
     """
 
-    def __init__(self, pose: list[float] = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100):
+    def __init__(self, pose: list = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100):
         """
         Args:
             pose: initial pose of robot.
@@ -149,13 +152,14 @@ class Sensor():
         self.distance_noise_stddev = 0.0
         self.angular_noise_stddev = 0.0
 
+
 class Odometry:
-    def __init__(self,pose):
+    def __init__(self, pose):
         self.previous_pose = copy.deepcopy(pose)
         self.current_pose = pose
 
     def __str__(self):
-        return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x-self.previous_pose.x, self.current_pose.y-self.previous_pose.y, self.current_pose.theta-self.previous_pose.theta)
+        return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
 
     def update(self, pose):
         self.current_pose = pose
