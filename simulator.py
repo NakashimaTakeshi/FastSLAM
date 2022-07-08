@@ -125,6 +125,7 @@ class Simulator(object):
         """
         print(msg)
         self._setup_visualization()
+        self._update_visualization()
         try:
             while True:
                 if keyboard.is_pressed("w"):
@@ -132,21 +133,25 @@ class Simulator(object):
                     mcl_calling_counter += 1
                     self._robot.move_forward(long_press_counter)
                     time.sleep(sleep_time)
+                    self._update_visualization()
                 elif keyboard.is_pressed("x"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.move_backward(long_press_counter)
                     time.sleep(sleep_time)
+                    self._update_visualization()
                 elif keyboard.is_pressed("a"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_left(long_press_counter)
                     time.sleep(sleep_time)
+                    self._update_visualization()
                 elif keyboard.is_pressed("d"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_right(long_press_counter)
                     time.sleep(sleep_time)
+                    self._update_visualization()
                 # elif keyboard.is_pressed("r"):
                 #     long_press_counter = 0
                 #     self._mcl.update_particles(self._robot.return_odometry(),self._return_obsabation(self._robot, self._landmarks),self._landmarks)
@@ -158,8 +163,8 @@ class Simulator(object):
                 if mcl_calling_counter >= 3:
                     self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
+                    self._update_visualization()
 
-                self._update_visualization()
 
         except KeyboardInterrupt:
             draw_gif()
@@ -206,4 +211,5 @@ class Simulator(object):
 
 
 if __name__ == '__main__':
-    simulator_test = Simulator()  # mci_test = MCL()  # simulator_test._visualization()
+    clear_output_directory()
+    simulator_test = Simulator()
