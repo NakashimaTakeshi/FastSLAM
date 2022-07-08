@@ -36,9 +36,10 @@ class Simulator(object):
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
-        # self._mcl = MCL(n_particle=30)
-        self._mcl = MCL(n_particle=100, x_region=self._x_region, y_region=self._y_region)
-        self._launch_operator_interface()
+        self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+
+        # select
+        self._launch_operator_interface()  # self._read_operation_data()
 
     def _generate_random_landmarks(self, n: int):
         self._landmarks = []
@@ -133,27 +134,31 @@ class Simulator(object):
                     time.sleep(sleep_time)
                     self._update_visualization()
                     save_operation("w", long_press_counter)
+
                 elif keyboard.is_pressed("x"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.move_backward(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
-                    save_operation("w", long_press_counter)
+                    save_operation("x", long_press_counter)
+
                 elif keyboard.is_pressed("a"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_left(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
-                    save_operation("w", long_press_counter)
+                    save_operation("a", long_press_counter)
+
                 elif keyboard.is_pressed("d"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_right(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
-                    save_operation("w", long_press_counter)
+                    save_operation("d", long_press_counter)
+
                 # elif keyboard.is_pressed("r"):
                 #     long_press_counter = 0
                 #     self._mcl.update_particles(self._robot.return_odometry(),self._return_obsabation(self._robot, self._landmarks),self._landmarks)
@@ -176,7 +181,7 @@ class Simulator(object):
         self._setup_visualization()
         self._update_visualization()
 
-        with open("operation.csv", "r") as f:
+        with open("./data/input/operation.csv", "r") as f:
             while True:
                 line = f.readline()
                 if not line:
@@ -187,22 +192,22 @@ class Simulator(object):
                 long_press_counter = int(line.split(",")[1])
                 self._robot.move_forward(long_press_counter)
 
-                if action =="w":
+                if action == "w":
                     self._robot.move_forward(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
                     mcl_calling_counter += 1
-                elif action =="x":
+                elif action == "x":
                     self._robot.move_backward(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
                     mcl_calling_counter += 1
-                elif action =="a":
+                elif action == "a":
                     self._robot.turn_left(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
                     mcl_calling_counter += 1
-                elif action =="d":
+                elif action == "d":
                     self._robot.turn_right(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
@@ -214,6 +219,7 @@ class Simulator(object):
                     self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
                     self._update_visualization()
+
 
 if __name__ == '__main__':
     clear_output_directory()
