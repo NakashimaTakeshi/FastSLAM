@@ -34,11 +34,13 @@ def draw_gif():
 
     clear_output_directory()
 
-
 def clear_output_directory():
     for file in glob.glob(directory_path + '*.png', recursive=True):
         os.remove(file)
 
 
-def save_operation():
-    operation_file
+def save_operation(action, counter):
+    operation_file=directory_path + 'operation_output.csv'
+    with open(operation_file, 'a') as f:
+        f.write(str(action) + ',' + str(counter))
+        f.close()

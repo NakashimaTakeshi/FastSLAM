@@ -132,24 +132,28 @@ class Simulator(object):
                     self._robot.move_forward(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
+                    save_operation("w", long_press_counter)
                 elif keyboard.is_pressed("x"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.move_backward(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
+                    save_operation("w", long_press_counter)
                 elif keyboard.is_pressed("a"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_left(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
+                    save_operation("w", long_press_counter)
                 elif keyboard.is_pressed("d"):
                     long_press_counter += 1
                     mcl_calling_counter += 1
                     self._robot.turn_right(long_press_counter)
                     time.sleep(sleep_time)
                     self._update_visualization()
+                    save_operation("w", long_press_counter)
                 # elif keyboard.is_pressed("r"):
                 #     long_press_counter = 0
                 #     self._mcl.update_particles(self._robot.return_odometry(),self._return_obsabation(self._robot, self._landmarks),self._landmarks)
@@ -163,40 +167,53 @@ class Simulator(object):
                     mcl_calling_counter = 0
                     self._update_visualization()
 
-
         except KeyboardInterrupt:
             draw_gif()
 
     def _read_operation_data(self):
         sleep_time = 0.01
+        mcl_calling_counter = 0
         self._setup_visualization()
         self._update_visualization()
 
-        while True:
-            counter += 1
-            self._robot.move_forward(counter)
-            time.sleep(sleep_time)
-            counter += 1
-            self._robot.move_backward(counter)
-            time.sleep(sleep_time)
-            counter += 1
-            self._robot.turn_left(counter)
-            time.sleep(sleep_time)
-            counter += 1
-            self._robot.turn_right(counter)
-            time.sleep(sleep_time)
-            counter = 0
-            # call mcl algorithm
-            # self._return_odometory_and_obsabation(self._robot, self.landmarks)
-            self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
+        with open("operation.csv", "r") as f:
+            while True:
+                line = f.readline()
+                if not line:
+                    draw_gif()
+                    break
 
-            time.sleep(sleep_time)
-            counter = 0
-            time.sleep(sleep_time)
+                action = line.split(",")[0]
+                long_press_counter = int(line.split(",")[1])
+                self._robot.move_forward(long_press_counter)
 
-            # self._mcl.update(self._robot.return_odometry())
-            self._update_visualization()
+                if action =="w":
+                    self._robot.move_forward(long_press_counter)
+                    time.sleep(sleep_time)
+                    self._update_visualization()
+                    mcl_calling_counter += 1
+                elif action =="x":
+                    self._robot.move_backward(long_press_counter)
+                    time.sleep(sleep_time)
+                    self._update_visualization()
+                    mcl_calling_counter += 1
+                elif action =="a":
+                    self._robot.turn_left(long_press_counter)
+                    time.sleep(sleep_time)
+                    self._update_visualization()
+                    mcl_calling_counter += 1
+                elif action =="d":
+                    self._robot.turn_right(long_press_counter)
+                    time.sleep(sleep_time)
+                    self._update_visualization()
+                    mcl_calling_counter += 1
+                else:
+                    time.sleep(sleep_time)
 
+                if mcl_calling_counter >= 3:
+                    self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
+                    mcl_calling_counter = 0
+                    self._update_visualization()
 
 if __name__ == '__main__':
     clear_output_directory()
