@@ -8,14 +8,6 @@ directorypath = "./data/output/"
 
 
 def rescale_list(list_, min_value, max_value):
-    """
-    Args:
-        list_: list to be rescaled.
-        min_value: minimum value of rescaled list.
-        max_value: maximum value of rescaled list.
-    Returns:
-        rescaled list.
-    """
     return [(x - min(list_)) / (max(list_) - min(list_)) * (max_value - min_value) + min_value for x in list_]
 
 
@@ -41,7 +33,7 @@ def draw_gif():
     for counter in range(n_image):
         im.append(Image.open(directorypath + str(counter) + '.png'))
         image_list.append(im[counter])
-    im[0].save(directorypath + '00.gif', save_all=True, append_images=image_list, duration=200, loop=0)
+    im[0].save(directorypath + 'mcl.gif', save_all=True, append_images=image_list, duration=200, loop=0)
     # image_list.append(Image.open(directorypath + str(step) + '.png'))
     # image_list.save(directorypath + 'test.gif', save_all=True, append_images=image_list, duration=200, loop=0)
 
