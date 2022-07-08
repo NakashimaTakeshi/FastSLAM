@@ -37,7 +37,7 @@ class Simulator(object):
         self._observing_landmarks = []
 
         # self._mcl = MCL(n_particle=30)
-        self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        self._mcl = MCL(n_particle=100, x_region=self._x_region, y_region=self._y_region)
         self._launch_operator_interface()
 
     def _generate_random_landmarks(self, n: int):
@@ -71,7 +71,7 @@ class Simulator(object):
                                                                                                                                           self._mcl.particle_set], [math.sin(particle.pose._theta) for
                                                                                                                                                                     particle in
                                                                                                                                                                     self._mcl.particle_set], color_list, cmap="Greys", clim=(
-        0.0, 1.0), label="particles")
+            0.0, 1.0), label="particles")
 
         # draw robot
         plt.quiver(self._robot.pose.x, self._robot.pose.y, math.cos(self._robot.pose.theta), math.sin(self._robot.pose.theta), color="red", label="actual robot pose")
@@ -119,8 +119,6 @@ class Simulator(object):
                    w
               a         d
                    x
-        Ovservation:
-                   r
         ---------------------------
         """
         print(msg)
@@ -169,21 +167,11 @@ class Simulator(object):
         except KeyboardInterrupt:
             draw_gif()
 
-    def _launch_operator_interface2(self):
-        counter = 0
+    def _read_operation_data(self):
         sleep_time = 0.01
-        msg = """
-        ---------------------------
-        Motion:
-                   w
-              a         d
-                   x
-        Ovservation:
-                   r
-        ---------------------------
-        """
-        print(msg)
         self._setup_visualization()
+        self._update_visualization()
+
         while True:
             counter += 1
             self._robot.move_forward(counter)
