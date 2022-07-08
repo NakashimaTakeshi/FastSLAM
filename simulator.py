@@ -59,15 +59,6 @@ class Simulator(object):
         for artist in plt.gca().lines + plt.gca().collections:
             artist.remove()
 
-        # draw robot
-        plt.quiver(self._robot.pose.x, self._robot.pose.y, math.cos(self._robot.pose.theta), math.sin(self._robot.pose.theta), color="red", label="actual robot pose")
-
-        # draw observating landmarks
-        plt.scatter([r.x for r in self._observing_landmarks], [r.y for r in self._observing_landmarks], s=50, marker="o", label="observing_landmarks", color="blue")
-
-        # draw landmarks
-        plt.scatter([r.x for r in self._landmarks], [r.y for r in self._landmarks], s=100, marker="1", label="landmarks", color="orange")
-
         # draw particle set
         max_wight = max([particle._weight for particle in self._mcl.particle_set])
         min_wight = min([particle._weight for particle in self._mcl.particle_set])
@@ -80,7 +71,16 @@ class Simulator(object):
                                                                                                                                           self._mcl.particle_set], [math.sin(particle.pose._theta) for
                                                                                                                                                                     particle in
                                                                                                                                                                     self._mcl.particle_set], color_list, cmap="Greys", clim=(
-            0.0, 1.0), label="particles")
+        0.0, 1.0), label="particles")
+
+        # draw robot
+        plt.quiver(self._robot.pose.x, self._robot.pose.y, math.cos(self._robot.pose.theta), math.sin(self._robot.pose.theta), color="red", label="actual robot pose")
+
+        # draw observating landmarks
+        plt.scatter([r.x for r in self._observing_landmarks], [r.y for r in self._observing_landmarks], s=50, marker="o", label="observing_landmarks", color="blue")
+
+        # draw landmarks
+        plt.scatter([r.x for r in self._landmarks], [r.y for r in self._landmarks], s=100, marker="1", label="landmarks", color="orange")
 
         plt.legend(loc='right', bbox_to_anchor=(1.75, 0.5))
         self.fig.canvas.flush_events()
