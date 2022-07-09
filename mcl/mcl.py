@@ -15,7 +15,7 @@ class MCL:
         # origin
         self.particle_set = [Particle(i, weight=1.0 / self._n_particle) for i in range(n_particle)]
 
-        # random  # self.particle_set = []  # for i in range(self._n_particle):  #     x = random.uniform(-x_region/2, x_region/2)  #     y = random.uniform(-y_region/2, y_region/2)  #     theta = random.uniform(0, 2 * math.pi)  #     self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
+        # random  # self.particle_set = []  # random.seed(95864133587513547965)  # for i in range(self._n_particle):  #     x = random.uniform(-x_region / 2, x_region / 2)  #     y = random.uniform(-y_region / 2, y_region / 2)  #     theta = random.uniform(0, 2 * math.pi)  #     self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 8.3.2 MCL algorithm"

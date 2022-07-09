@@ -38,8 +38,9 @@ class Simulator(object):
 
         self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
 
-        # select
-        self._launch_operator_interface()  # self._read_operation_data()
+        # select operation mode
+        # self._launch_operator_interface()
+        self._read_operation_data()
 
     def _generate_random_landmarks(self, n: int):
         self._landmarks = []
@@ -184,36 +185,37 @@ class Simulator(object):
         with open("./data/input/operation.csv", "r") as f:
             while True:
                 line = f.readline()
+
                 if not line:
                     draw_gif()
                     break
 
-                action = line.split(",")[0]
-                long_press_counter = int(line.split(",")[1])
-                self._robot.move_forward(long_press_counter)
-
-                if action == "w":
-                    self._robot.move_forward(long_press_counter)
-                    time.sleep(sleep_time)
-                    self._update_visualization()
-                    mcl_calling_counter += 1
-                elif action == "x":
-                    self._robot.move_backward(long_press_counter)
-                    time.sleep(sleep_time)
-                    self._update_visualization()
-                    mcl_calling_counter += 1
-                elif action == "a":
-                    self._robot.turn_left(long_press_counter)
-                    time.sleep(sleep_time)
-                    self._update_visualization()
-                    mcl_calling_counter += 1
-                elif action == "d":
-                    self._robot.turn_right(long_press_counter)
-                    time.sleep(sleep_time)
-                    self._update_visualization()
-                    mcl_calling_counter += 1
                 else:
-                    time.sleep(sleep_time)
+                    action = line.split(",")[0]
+                    long_press_counter = int(line.split(",")[1])
+
+                    if action == "w":
+                        self._robot.move_forward(long_press_counter)
+                        time.sleep(sleep_time)
+                        self._update_visualization()
+                        mcl_calling_counter += 1
+                    elif action == "x":
+                        self._robot.move_backward(long_press_counter)
+                        time.sleep(sleep_time)
+                        self._update_visualization()
+                        mcl_calling_counter += 1
+                    elif action == "a":
+                        self._robot.turn_left(long_press_counter)
+                        time.sleep(sleep_time)
+                        self._update_visualization()
+                        mcl_calling_counter += 1
+                    elif action == "d":
+                        self._robot.turn_right(long_press_counter)
+                        time.sleep(sleep_time)
+                        self._update_visualization()
+                        mcl_calling_counter += 1
+                    else:
+                        time.sleep(sleep_time)
 
                 if mcl_calling_counter >= 3:
                     self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)

@@ -32,14 +32,17 @@ def draw_gif():
         image_list.append(im[counter])
     im[0].save(output_directory_path + 'mcl.gif', save_all=True, append_images=image_list, duration=200, loop=0)
 
-    clear_output_directory()
+    clear_png_output_directory()
 
 
 def clear_output_directory():
-    for file in glob.glob(output_directory_path + '*.png', recursive=True):
+    for file in glob.glob(output_directory_path + '*', recursive=True):
         os.remove(file)
 
-    # os.remove(output_directory_path + 'mcl.gif')
+
+def clear_png_output_directory():
+    for file in glob.glob(output_directory_path + '*.png', recursive=True):
+        os.remove(file)
 
 
 def save_operation(action, counter):
