@@ -1,8 +1,7 @@
 import math
 import copy
 
-from typing import List
-
+from mcl.pose import Pose
 
 class Robot(object):
     """
@@ -16,13 +15,10 @@ class Robot(object):
             pose: initial pose of robot.
             x_region,y_region : robot movement area (prefer to be same as range of simulation 2D field.)
         """
-        # ToDo
-        # 上位クラスの属性(環境の範囲)を条件式に含むValueErrorは設定できるか？
-        # Simulation クラスのx_regionとy_regionから外れた場所にロボット位置が来たら、エラーを出すor移動操作をうけないようにしたい。
         self._x_restriction = x_region / 2
         self._y_restriction = y_region / 2
 
-        self.pose = Pose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
+        self.pose = ActualPose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
         self.range_sensor = Sensor(range_min=0, range_max=50)
 
         self.linear_speed_min = 0.1
@@ -79,30 +75,23 @@ class Robot(object):
         pass
 
 
-# To Do
-# 構造体を書く時の注意はあるか、何らかのデコレーション必要？
-# setterでx,yを設定する時に、範囲外に出た場合にエラーを出すようにしたい。
-# x,y　はクライアントクラスで設定されたシミュレーション環境範囲の情報を取得する必要がある・・・
-class Pose():
+class ActualPose(Pose):
     def __init__(self, x: float = 0.0, y: float = 0.0, theta: float = 0.0, x_restriction: float = 100.0, y_restriction: float = 100.0):
         self._x_restriction = x_restriction
         self._y_restriction = y_restriction
+        super().__init__(x, y, theta)
 
-        self.x = x
-        self.y = y
-        self.theta = theta
-
-    @property
-    def theta(self):
-        return self._theta
-
-    @theta.setter
-    def theta(self, theta):
-        if theta > math.pi:
-            theta -= 2 * math.pi
-        elif theta < -math.pi:
-            theta += 2 * math.pi
-        self._theta = theta
+    # @property
+    # def _theta(self):
+    #     return self.__theta
+    #
+    # @_theta.setter
+    # def theta(self, theta):
+    #     if theta > math.pi:
+    #         theta -= 2 * math.pi
+    #     elif theta < -math.pi:
+    #         theta += 2 * math.pi
+    #     self._theta = theta
 
     @property
     def x(self):
@@ -127,12 +116,6 @@ class Pose():
         elif y < -self._y_restriction:
             y = -self._y_restriction
         self._y = y
-
-    def __str__(self):
-        return f'({self.x}, {self.y}, {self.theta})'
-
-    def __repr__(self):
-        return f'Pose({self.x}, {self.y}, {self.theta})'
 
 
 class Sensor():

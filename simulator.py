@@ -69,8 +69,8 @@ class Simulator(object):
         else:
             color_list = [0.8 for _ in self._mcl.particle_set]
 
-        plt.quiver([particle.pose._x for particle in self._mcl.particle_set], [particle.pose._y for particle in self._mcl.particle_set], [math.cos(particle.pose._theta) for particle in
-                                                                                                                                          self._mcl.particle_set], [math.sin(particle.pose._theta) for
+        plt.quiver([particle.pose.x for particle in self._mcl.particle_set], [particle.pose.y for particle in self._mcl.particle_set], [math.cos(particle.pose.theta) for particle in
+                                                                                                                                          self._mcl.particle_set], [math.sin(particle.pose.theta) for
                                                                                                                                                                     particle in
                                                                                                                                                                     self._mcl.particle_set], color_list, cmap="Greys", clim=(
             0.0, 1.0), label="particles")
@@ -84,7 +84,7 @@ class Simulator(object):
         # draw landmarks
         plt.scatter([r.x for r in self._landmarks], [r.y for r in self._landmarks], s=100, marker="1", label="landmarks", color="orange")
 
-        plt.legend(loc='right', bbox_to_anchor=(1.75, 0.5))
+        plt.legend(loc='right', bbox_to_anchor=(1.65, 0.5))
         self.fig.canvas.flush_events()
         save_png()
 
