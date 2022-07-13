@@ -14,9 +14,8 @@ class MCL:
         # original pose of robot
 
         # origin
-        self.particle_set = [Particle(i, weight=1.0 / self._n_particle) for i in range(n_particle)]
+        # self.particle_set = [Particle(i, weight=1.0 / self._n_particle) for i in range(n_particle)]
         # random
-        """
         self.particle_set = []
         random.seed(95864133587513547965)
         for i in range(self._n_particle):
@@ -24,14 +23,14 @@ class MCL:
             y = random.uniform(-y_region / 2, y_region / 2)
             theta = random.uniform(0, 2 * math.pi)
             self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
-        """
+
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 8.3.2 MCL algorithm"
         temp_particle_set = []
 
         for particle in self.particle_set:
             particle.pose = self._sample_motion_model_odometory(particle.pose, odometry)
-            particle._weight *= self._mesurement_model(particle, observations, landmarks)
+            particle._weight *= self._measurement_model(particle, observations, landmarks)
             temp_particle_set.append(particle)
 
         # resampling
@@ -46,7 +45,7 @@ class MCL:
         self.particle_set = self._resampling(temp_particle_set)
 
     @staticmethod
-    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 0.01, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1):
+    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1):
         # This method refer to "Probabilistic Robotics chaper 5.4.2 sample motion model odometory algorithm"
 
         delta_rotation1 = math.atan2(odometry.current_pose.y - odometry.previous_pose.y, odometry.current_pose.x - odometry.previous_pose.x) - odometry.previous_pose.theta
@@ -63,7 +62,7 @@ class MCL:
         return pose
 
     @staticmethod
-    def _mesurement_model(particle, observations, landmarks):
+    def _measurement_model(particle, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 6.6.3 landmark model known correspondence algorithm"
         # ToDo ランドマークと計測の対応は既知のモデル。correspondence　は必ず一致するので、全てのパーティクルに同じ影響を与える。変更が必要か要検討。
         # ToDo ランドマークオブジェクトにはIDメンバ変数があるが、リストのインデックスで呼び出してしまっている。
@@ -88,10 +87,8 @@ class MCL:
 
     def _resampling(self, particle_set: list):
         nomalized_weights = [particle._weight / sum(particle._weight for particle in particle_set) for particle in particle_set]
-        n_eff = 1.0 / sum(w ** 2 for w in nomalized_weights)
         rv = stats.multinomial(n=1, p=nomalized_weights)
-
-
+        print(sum(nomalized_weights),nomalized_weights)
         new_particle_set = []
         for i in range(self._n_particle):
             rvs = rv.rvs(size=1)

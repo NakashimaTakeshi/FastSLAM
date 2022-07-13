@@ -225,4 +225,4 @@ class Simulator(object):
 
 if __name__ == '__main__':
     clear_output_directory()
-    simulator_test = Simulator()
+    simulator_test = Simulator(n_landmark=2)
