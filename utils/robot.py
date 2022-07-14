@@ -19,7 +19,7 @@ class Robot(object):
         self._y_restriction = y_region / 2
 
         self.pose = ActualPose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
-        self.range_sensor = Sensor(range_min=0, range_max=50)
+        self.range_sensor = Sensor(range_min=10, range_max=50)
 
         self.linear_speed_min = 0.1
         self.linear_speed_max = 10.0
@@ -119,7 +119,7 @@ class ActualPose(Pose):
 
 
 class Sensor():
-    def __init__(self, range_max: float = 0.1, range_min: float = 3.5, angular_range: float = 360.0):
+    def __init__(self,  range_min: float = 10.0,range_max: float = 50.0, angular_range: float = 360.0):
         if range_max <= range_min:
             raise ValueError('range_max must be larger than range_min.')
         if not 0 <= angular_range <= 360:

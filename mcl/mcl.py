@@ -64,13 +64,11 @@ class MCL:
     @staticmethod
     def _measurement_model(particle, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 6.6.3 landmark model known correspondence algorithm"
-        # ToDo ランドマークと計測の対応は既知のモデル。correspondence　は必ず一致するので、全てのパーティクルに同じ影響を与える。変更が必要か要検討。
         # ToDo ランドマークオブジェクトにはIDメンバ変数があるが、リストのインデックスで呼び出してしまっている。
 
         # set variance
         std_distance = 20.0
-        std_angle = 10.0
-        std_correspondence = 1 / math.sqrt(2 * math.pi)
+        std_angle = 45.0 * math.pi/180.0
 
         likelihood = 1.0
         for observation in observations:
@@ -79,9 +77,10 @@ class MCL:
             distance = math.sqrt((landmarks[j].x - particle.pose.x) ** 2 + (landmarks[j].y - particle.pose.y) ** 2)
             angle = math.atan2(landmarks[j].y - particle.pose.y, landmarks[j].x - particle.pose.x) - particle.pose.theta
 
-            angle = (angle + math.pi) % (2 * math.pi) - math.pi  # reset angle value in range -pi to pi
+            delta_angle = observation.angle - angle
+            delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi  # reset angle value in range -pi to pi
 
-            likelihood *= stats.norm.pdf(observation.distance, distance, std_distance) * stats.norm.pdf(observation.angle, angle, std_angle) * stats.norm.pdf(observation.landmark_id, j, std_correspondence)
+            likelihood *= stats.norm.pdf(observation.distance-distance, 0, std_distance) * stats.norm.pdf(delta_angle , 0, std_angle)
 
         return likelihood
 

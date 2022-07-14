@@ -28,7 +28,6 @@ class Simulator(object):
         """
         if x_region < 0 or y_region < 0:
             raise ValueError('x_region and y_region must be positive.')
-
         self._x_region = x_region
         self._y_region = y_region
 
@@ -37,10 +36,12 @@ class Simulator(object):
         self._observing_landmarks = []
 
         self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        self._mcl_counter = 0
 
         # select operation mode
         # self._launch_operator_interface()
         self._read_operation_data()
+
 
     def _generate_random_landmarks(self, n: int):
         self._landmarks = []
@@ -54,11 +55,11 @@ class Simulator(object):
         plt.ion()
         self.fig = plt.figure(num=1)
         sp = self.fig.add_subplot(111, aspect='equal')
-        sp.set_xlim(-self._x_region / 2.0 - 5, self._x_region / 2.0 + 5)
-        sp.set_ylim(-self._y_region / 2.0 - 5, self._y_region / 2.0 + 5)
+        sp.set_xlim(-self._x_region / 2.0 - 50, self._x_region / 2.0 + 50)
+        sp.set_ylim(-self._y_region / 2.0 - 50, self._y_region / 2.0 + 50)
 
     def _update_visualization(self):
-        for artist in plt.gca().lines + plt.gca().collections:
+        for artist in plt.gca().lines + plt.gca().collections + plt.gca().texts:
             artist.remove()
 
         # draw particle set
@@ -84,7 +85,10 @@ class Simulator(object):
         # draw landmarks
         plt.scatter([r.x for r in self._landmarks], [r.y for r in self._landmarks], s=100, marker="1", label="landmarks", color="orange")
 
-        plt.legend(loc='right', bbox_to_anchor=(1.65, 0.5))
+        # draw anotation
+        plt.annotate(str(self._mcl_counter), xy=(120, 130), size=12, color="black")
+
+        plt.legend(loc='right', bbox_to_anchor=(1.60, 0.5))
         self.fig.canvas.flush_events()
         save_png()
 
@@ -171,6 +175,7 @@ class Simulator(object):
                 if mcl_calling_counter >= 3:
                     self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
+                    self._mcl_counter += 1
                     self._update_visualization()
 
         except KeyboardInterrupt:
@@ -220,9 +225,10 @@ class Simulator(object):
                 if mcl_calling_counter >= 3:
                     self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
+                    self._mcl_counter += 1
                     self._update_visualization()
 
 
 if __name__ == '__main__':
     clear_output_directory()
-    simulator_test = Simulator(n_landmark=2)
+    simulator_test = Simulator(n_landmark=5)
