@@ -46,21 +46,24 @@ class TestMCL(TestCase):
         # self.assertTrue(all(xpose_actual == pose_expected))
 
     def _save_visualization(self):
-        _x_region_min,_x_region_max=0,25
-        _y_region_min,_y_region_max=-5,20
+        _x_region_min,_x_region_max=-2,25
+        _y_region_min,_y_region_max=-2,25
+        # _x_region_min,_x_region_max=0,25
+        # _y_region_min,_y_region_max=-5,20
 
         fig = plt.figure(num=1)
         sp = fig.add_subplot(111, aspect='equal')
-        sp.set_xlim(_x_region_min - 5, _x_region_max + 5)
-        sp.set_ylim(_y_region_min - 5, _y_region_max + 5)
+        sp.set_xlim(_x_region_min , _x_region_max )
+        sp.set_ylim(_y_region_min , _y_region_max )
 
         # draw particle set
         plt.quiver([pose.x for pose in self.pose_set], [pose.y for pose in self.pose_set], [math.cos(pose.theta) for pose in self.pose_set], [math.sin(pose._theta) for pose in self.pose_set], cmap="Greys", clim=(0.0, 1.0), label="particles",width=0.004)
 
         # draw robot
-        plt.quiver(self._previouse_pose.x, self._previouse_pose.y, math.cos(self._previouse_pose.theta), math.sin(self._previouse_pose.theta), color="magenta", label="previous pose",width=0.007)
-        plt.quiver(self._later_pose.x, self._later_pose.y, math.cos(self._later_pose.theta), math.sin(self._later_pose.theta), color="red", label="next pose",width=0.007)
-        plt.legend(loc='right', bbox_to_anchor=(1.5, 0.5))
+        robot_scale=10
+        plt.quiver(self._previouse_pose.x, self._previouse_pose.y, math.cos(self._previouse_pose.theta), math.sin(self._previouse_pose.theta), scale=robot_scale, color="magenta", label="previous pose",width=0.01)
+        plt.quiver(self._later_pose.x, self._later_pose.y, math.cos(self._later_pose.theta), math.sin(self._later_pose.theta), scale=robot_scale,color="red", label="next pose",width=0.01)
+        # plt.legend(loc='right', bbox_to_anchor=(1.5, 0.5))
 
         save_png()
 

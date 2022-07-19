@@ -30,7 +30,7 @@ def draw_gif():
     for counter in range(n_image):
         im.append(Image.open(output_directory_path + str(counter) + '.png'))
         image_list.append(im[counter])
-    im[0].save(output_directory_path + 'mcl.gif', save_all=True, append_images=image_list, duration=100, loop=0)
+    im[0].save(output_directory_path + 'mcl.gif', save_all=True, append_images=image_list, duration=100, loop=1000)
 
     clear_png_output_directory()
 

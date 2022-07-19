@@ -88,7 +88,7 @@ class Simulator(object):
         # draw anotation
         plt.annotate(str(self._mcl_counter), xy=(120, 130), size=12, color="black")
 
-        plt.legend(loc='right', bbox_to_anchor=(1.60, 0.5))
+        # plt.legend(loc='right', bbox_to_anchor=(1.60, 0.5))
         self.fig.canvas.flush_events()
         save_png()
 
@@ -201,22 +201,18 @@ class Simulator(object):
 
                     if action == "w":
                         self._robot.move_forward(long_press_counter)
-                        time.sleep(sleep_time)
                         self._update_visualization()
                         mcl_calling_counter += 1
                     elif action == "x":
                         self._robot.move_backward(long_press_counter)
-                        time.sleep(sleep_time)
                         self._update_visualization()
                         mcl_calling_counter += 1
                     elif action == "a":
                         self._robot.turn_left(long_press_counter)
-                        time.sleep(sleep_time)
                         self._update_visualization()
                         mcl_calling_counter += 1
                     elif action == "d":
                         self._robot.turn_right(long_press_counter)
-                        time.sleep(sleep_time)
                         self._update_visualization()
                         mcl_calling_counter += 1
                     else:

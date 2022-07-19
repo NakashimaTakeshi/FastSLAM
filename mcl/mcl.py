@@ -14,8 +14,10 @@ class MCL:
         # original pose of robot
 
         # origin
-        # self.particle_set = [Particle(i, weight=1.0 / self._n_particle) for i in range(n_particle)]
+        self.particle_set = [Particle(i, weight=1.0 / self._n_particle) for i in range(n_particle)]
+
         # random
+        """
         self.particle_set = []
         random.seed(95864133587513547965)
         for i in range(self._n_particle):
@@ -23,6 +25,7 @@ class MCL:
             y = random.uniform(-y_region / 2, y_region / 2)
             theta = random.uniform(0, 2 * math.pi)
             self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
+        """
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 8.3.2 MCL algorithm"
@@ -64,18 +67,18 @@ class MCL:
     @staticmethod
     def _measurement_model(particle, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 6.6.3 landmark model known correspondence algorithm"
-        # ToDo ランドマークオブジェクトにはIDメンバ変数があるが、リストのインデックスで呼び出してしまっている。
 
-        # set variance
+        # set standard deviation
         std_distance = 20.0
-        std_angle = 45.0 * math.pi/180.0
+        std_angle = 45. * math.pi/180.0
 
         likelihood = 1.0
         for observation in observations:
             j = observation.landmark_id
+            landmark = list(filter(lambda landmark: landmark.id == j, landmarks))[0]
 
-            distance = math.sqrt((landmarks[j].x - particle.pose.x) ** 2 + (landmarks[j].y - particle.pose.y) ** 2)
-            angle = math.atan2(landmarks[j].y - particle.pose.y, landmarks[j].x - particle.pose.x) - particle.pose.theta
+            distance = math.sqrt((landmark.x - particle.pose.x) ** 2 + (landmark.y - particle.pose.y) ** 2)
+            angle = math.atan2(landmark.y - particle.pose.y, landmark.x - particle.pose.x) - particle.pose.theta
 
             delta_angle = observation.angle - angle
             delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi  # reset angle value in range -pi to pi
@@ -86,6 +89,9 @@ class MCL:
 
     def _resampling(self, particle_set: list):
         nomalized_weights = [particle._weight / sum(particle._weight for particle in particle_set) for particle in particle_set]
+        if sum(nomalized_weights) > 1.0:
+            nomalized_weights = [w/sum(nomalized_weights) for w in nomalized_weights]
+
         rv = stats.multinomial(n=1, p=nomalized_weights)
         print(sum(nomalized_weights),nomalized_weights)
         new_particle_set = []
