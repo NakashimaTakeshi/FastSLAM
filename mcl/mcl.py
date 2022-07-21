@@ -97,7 +97,7 @@ class MCL:
         new_particle_set = []
         for i in range(self._n_particle):
             rvs = rv.rvs(size=1)
-            new_particle_set.append(Particle(id=1, x=particle_set[np.argmax(rvs[0])].pose.x, y=particle_set[np.argmax(rvs[0])].pose.y, theta=particle_set[
+            new_particle_set.append(Particle(id=i, x=particle_set[np.argmax(rvs[0])].pose.x, y=particle_set[np.argmax(rvs[0])].pose.y, theta=particle_set[
                 np.argmax(rvs[0])].pose.theta, weight=1.0 / self._n_particle))
 
         return new_particle_set
@@ -109,6 +109,7 @@ class Particle:
         self.pose = Pose(x, y, theta)
         self._weight = weight
         self.parent_id = None
+        # self.features = [] # for FastSLAM1.0
 
     def __str__(self):
         return "id:{}, x:{}, y:{}, theta:{}, weight:{}".format(self._id, self.x, self.y, self.theta, self._weight)

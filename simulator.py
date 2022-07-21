@@ -1,11 +1,15 @@
 import math, random
 import time
 
+import numpy as np
+import scipy.stats as stats
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 import keyboard
 
 from utils.robot import Robot
 from mcl.mcl import MCL
+from fastslam.fastslam import FastSlam
 from utils.observation import Observation
 from utils.landmark import Landmark
 from utils.utils import *
@@ -35,7 +39,8 @@ class Simulator(object):
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
-        self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        # self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        self._mcl = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
         self._mcl_counter = 0
 
         # select operation mode
@@ -54,12 +59,12 @@ class Simulator(object):
     def _setup_visualization(self):
         plt.ion()
         self.fig = plt.figure(num=1)
-        sp = self.fig.add_subplot(111, aspect='equal')
-        sp.set_xlim(-self._x_region / 2.0 - 50, self._x_region / 2.0 + 50)
-        sp.set_ylim(-self._y_region / 2.0 - 50, self._y_region / 2.0 + 50)
+        self.sp = self.fig.add_subplot(111, aspect='equal')
+        self.sp.set_xlim(-self._x_region / 2.0 - 50, self._x_region / 2.0 + 50)
+        self.sp.set_ylim(-self._y_region / 2.0 - 50, self._y_region / 2.0 + 50)
 
     def _update_visualization(self):
-        for artist in plt.gca().lines + plt.gca().collections + plt.gca().texts:
+        for artist in plt.gca().lines + plt.gca().collections + plt.gca().texts + plt.gca().patches:
             artist.remove()
 
         # draw particle set
@@ -87,6 +92,26 @@ class Simulator(object):
 
         # draw anotation
         plt.annotate(str(self._mcl_counter), xy=(120, 130), size=12, color="black")
+
+        # draw map
+        if 1==1:
+            el_prob = 0.95
+            el_c = np.sqrt(stats.chi2.ppf(el_prob, 2))
+
+            max_weight_particle_id = self._mcl.particle_set.index(max([particle for particle in self._mcl.particle_set], key=lambda particle: particle._weight))
+            for feature in self._mcl.particle_set[max_weight_particle_id]._features:
+
+                lmda, vec = np.linalg.eig(feature._covariance_matrix[:2,:2])
+                el_width, el_height = 2 * el_c * np.sqrt(lmda)
+                el_angle = np.rad2deg(np.arctan2(vec[1, 0], vec[0, 0]))
+
+                v1 = lmda[0] * vec[:, 0]
+                v2 = lmda[1] * vec[:, 1]
+                v1_direction = np.rad2deg(math.atan2(v1[1], v1[0]))
+
+                el = Ellipse(xy=[feature._mean[0],feature._mean[1]], width=el_width, height=el_height, angle=el_angle, color="blue", alpha=0.3)
+                # plt.add_artist(el)
+                self.sp.add_patch(el)
 
         # plt.legend(loc='right', bbox_to_anchor=(1.60, 0.5))
         self.fig.canvas.flush_events()
