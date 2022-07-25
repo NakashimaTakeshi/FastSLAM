@@ -24,7 +24,7 @@ class Simulator(object):
     # The URL below is referenced.
     # https://github.com/ryuichiueda/probrobo_practice/blob/master/monte_carlo_localization/1.monte_calro_localization.ipynb
 
-    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5):
+    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 20):
         """
         Args:
             x_region,y_region : range of simulation 2D field.
@@ -35,18 +35,17 @@ class Simulator(object):
         self._x_region = x_region
         self._y_region = y_region
 
-        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region)
+        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region, range_min=10, range_max=50)
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
-        # self._mcl = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
-        self._mcl = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
-        self._mcl_counter = 0
+        # self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        self._step_counter = 0
 
         # select operation mode
         # self._launch_operator_interface()
         self._read_operation_data()
-
 
     def _generate_random_landmarks(self, n: int):
         self._landmarks = []
@@ -68,18 +67,17 @@ class Simulator(object):
             artist.remove()
 
         # draw particle set
-        max_wight = max([particle._weight for particle in self._mcl.particle_set])
-        min_wight = min([particle._weight for particle in self._mcl.particle_set])
+        max_wight = max([particle._weight for particle in self._estimation_method.particle_set])
+        min_wight = min([particle._weight for particle in self._estimation_method.particle_set])
         if max_wight != min_wight:
-            color_list = rescale_list([particle._weight for particle in self._mcl.particle_set], 0.5, 1.0)
+            color_list = rescale_list([particle._weight for particle in self._estimation_method.particle_set], 0.5, 1.0)
         else:
-            color_list = [0.8 for _ in self._mcl.particle_set]
+            color_list = [0.8 for _ in self._estimation_method.particle_set]
 
-        plt.quiver([particle.pose.x for particle in self._mcl.particle_set], [particle.pose.y for particle in self._mcl.particle_set], [math.cos(particle.pose.theta) for particle in
-                                                                                                                                          self._mcl.particle_set], [math.sin(particle.pose.theta) for
+        plt.quiver([particle.pose.x for particle in self._estimation_method.particle_set], [particle.pose.y for particle in self._estimation_method.particle_set], [math.cos(particle.pose.theta) for
                                                                                                                                                                     particle in
-                                                                                                                                                                    self._mcl.particle_set], color_list, cmap="Greys", clim=(
-            0.0, 1.0), label="particles")
+                                                                                                                                                                    self._estimation_method.particle_set], [
+            math.sin(particle.pose.theta) for particle in self._estimation_method.particle_set], color_list, cmap="Greys", clim=(0.0, 1.0), label="particles")
 
         # draw robot
         plt.quiver(self._robot.pose.x, self._robot.pose.y, math.cos(self._robot.pose.theta), math.sin(self._robot.pose.theta), color="red", label="actual robot pose")
@@ -91,17 +89,16 @@ class Simulator(object):
         plt.scatter([r.x for r in self._landmarks], [r.y for r in self._landmarks], s=100, marker="1", label="landmarks", color="orange")
 
         # draw anotation
-        plt.annotate(str(self._mcl_counter), xy=(120, 130), size=12, color="black")
+        plt.annotate(str(self._step_counter), xy=(120, 130), size=12, color="black")
 
         # draw map
-        if 1==1:
+        if self._estimation_method.__class__.__name__ == "FastSlam":
             el_prob = 0.95
             el_c = np.sqrt(stats.chi2.ppf(el_prob, 2))
 
-            max_weight_particle_id = self._mcl.particle_set.index(max([particle for particle in self._mcl.particle_set], key=lambda particle: particle._weight))
-            for feature in self._mcl.particle_set[max_weight_particle_id]._features:
-
-                lmda, vec = np.linalg.eig(feature._covariance_matrix[:2,:2])
+            max_weight_particle_id = self._estimation_method.particle_set.index(max([particle for particle in self._estimation_method.particle_set], key=lambda particle: particle._weight))
+            for feature in self._estimation_method.particle_set[max_weight_particle_id]._features:
+                lmda, vec = np.linalg.eig(feature._covariance_matrix[:2, :2])
                 el_width, el_height = 2 * el_c * np.sqrt(lmda)
                 el_angle = np.rad2deg(np.arctan2(vec[1, 0], vec[0, 0]))
 
@@ -109,8 +106,7 @@ class Simulator(object):
                 v2 = lmda[1] * vec[:, 1]
                 v1_direction = np.rad2deg(math.atan2(v1[1], v1[0]))
 
-                el = Ellipse(xy=[feature._mean[0],feature._mean[1]], width=el_width, height=el_height, angle=el_angle, color="blue", alpha=0.3)
-                # plt.add_artist(el)
+                el = Ellipse(xy=[feature._mean[0], feature._mean[1]], width=el_width, height=el_height, angle=el_angle, color="blue", alpha=0.3)
                 self.sp.add_patch(el)
 
         # plt.legend(loc='right', bbox_to_anchor=(1.60, 0.5))
@@ -198,9 +194,9 @@ class Simulator(object):
                     time.sleep(sleep_time)
 
                 if mcl_calling_counter >= 3:
-                    self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
+                    self._estimation_method.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
-                    self._mcl_counter += 1
+                    self._step_counter += 1
                     self._update_visualization()
 
         except KeyboardInterrupt:
@@ -212,7 +208,7 @@ class Simulator(object):
         self._setup_visualization()
         self._update_visualization()
 
-        with open("./data/input/operation.csv", "r") as f:
+        with open("data/input/operation.csv", "r") as f:
             while True:
                 line = f.readline()
 
@@ -244,9 +240,9 @@ class Simulator(object):
                         time.sleep(sleep_time)
 
                 if mcl_calling_counter >= 3:
-                    self._mcl.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
+                    self._estimation_method.update_particles(self._robot.return_odometry(), self._return_obsabation(self._robot, self._landmarks), self._landmarks)
                     mcl_calling_counter = 0
-                    self._mcl_counter += 1
+                    self._step_counter += 1
                     self._update_visualization()
 
 

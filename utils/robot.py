@@ -3,13 +3,14 @@ import copy
 
 from mcl.pose import Pose
 
+
 class Robot(object):
     """
     Class that holds attributes of the robot pose,sensor specs and motion specs.
     and provides methods of operate atoribute avabu.
     """
 
-    def __init__(self, pose: list = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100):
+    def __init__(self, pose: list = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100, range_min: int = 10, range_max: int = 50):
         """
         Args:
             pose: initial pose of robot.
@@ -19,7 +20,7 @@ class Robot(object):
         self._y_restriction = y_region / 2
 
         self.pose = ActualPose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
-        self.range_sensor = Sensor(range_min=10, range_max=50)
+        self.range_sensor = Sensor(range_min, range_max)
 
         self.linear_speed_min = 0.1
         self.linear_speed_max = 10.0
@@ -119,7 +120,7 @@ class ActualPose(Pose):
 
 
 class Sensor():
-    def __init__(self,  range_min: float = 10.0,range_max: float = 50.0, angular_range: float = 360.0):
+    def __init__(self, range_min: float = 10.0, range_max: float = 50.0, angular_range: float = 360.0):
         if range_max <= range_min:
             raise ValueError('range_max must be larger than range_min.')
         if not 0 <= angular_range <= 360:
