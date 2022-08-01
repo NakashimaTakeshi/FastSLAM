@@ -1,4 +1,4 @@
-import math
+import math,random
 import copy
 
 from mcl.pose import Pose
@@ -70,6 +70,9 @@ class Robot(object):
     def return_odometry(self):
         return_odomertry = copy.deepcopy(self._odometry)
         self._odometry.__init__(self.pose)
+
+        return_odomertry.add_noise()
+
         return return_odomertry
 
     def _observe_landmarks(self):
@@ -142,8 +145,27 @@ class Odometry:
         self.previous_pose = copy.deepcopy(pose)
         self.current_pose = pose
 
+        self.transition_noise_stddev = 20.0
+        self.rotation_noise_stddev = 45.0 * math.pi/180.0
+
     def __str__(self):
         return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
 
     def update(self, pose):
         self.current_pose = pose
+
+    def return_delta(self):
+        delta_odometory = Pose(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
+        return delta_odometory
+
+    def add_noise_on_current_pose(self,alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1):
+        delta_rotation1 = math.atan2(self.current_pose.y - self.previous_pose.y, self.current_pose.x - self.previous_pose.x) - self.previous_pose.theta
+        delta_translation = math.sqrt((self.current_pose.x - self.previous_pose.x) ** 2 + (self.current_pose.y - self.previous_pose.y) ** 2)
+        delta_rotation2 = self.current_pose.theta - self.previous_pose.theta - delta_rotation1
+
+        delta_rotation1 -= random.gauss(0, math.sqrt(alpha1 * delta_rotation1 ** 2 + alpha2 * delta_translation ** 2))
+        delta_translation -= random.gauss(0, math.sqrt(alpha3 * delta_translation ** 2 + alpha4 * delta_rotation1 ** 2 + alpha4 * delta_rotation2 ** 2))
+        delta_rotation2 -= random.gauss(0, math.sqrt(alpha1 * delta_rotation2 ** 2 + alpha2 * delta_translation ** 2))
+
+        # update pose
+        self.current_pose = Pose(self.previouse_pose.x + delta_translation * math.cos(self.previouse_pose.theta + delta_rotation1), self.previouse_pose.y + delta_translation * math.sin(self.previouse_pose.theta + delta_rotation1), self.previouse_pose.theta + delta_rotation1 + delta_rotation2)
