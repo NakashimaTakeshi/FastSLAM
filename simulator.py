@@ -1,5 +1,6 @@
 import math, random
 import time
+import sys
 
 import numpy as np
 import scipy.stats as stats
@@ -24,7 +25,7 @@ class Simulator(object):
     # The URL below is referenced.
     # https://github.com/ryuichiueda/probrobo_practice/blob/master/monte_carlo_localization/1.monte_calro_localization.ipynb
 
-    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 20):
+    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5,estimation_method: str = "MCL",):
         """
         Args:
             x_region,y_region : range of simulation 2D field.
@@ -39,8 +40,13 @@ class Simulator(object):
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
-        # self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
-        self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        if estimation_method == "MCL":
+            self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        elif estimation_method == "FastSLAM":
+            self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+        else:
+            raise ValueError('estimation_method must be "MCL" or "FastSLAM".')
+
         self._step_counter = 0
 
         # select operation mode
@@ -248,8 +254,11 @@ class Simulator(object):
 
 if __name__ == '__main__':
     clear_output_directory()
+    args = sys.argv
 
+    if args[1] not in ["MCL", "FastSLAM"]:
+        print("Please enter a valid estimation method: MCL or FastSLAM")
+        exit(1)
+    method = args[1]
 
-        method = arg[1]
-
-    simulator_test = Simulator(n_landmark=5)
+    simulator_test = Simulator(n_landmark=5,method=method)
