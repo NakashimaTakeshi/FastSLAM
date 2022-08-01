@@ -39,8 +39,8 @@ class FastSlam(MCL):
 
     def _fastslam_measurement_model(self, particle, observations, landmarks, i):
         # set standard deviation
-        std_distance = 10.0
-        std_angle = 22.5 * math.pi / 180.0
+        std_distance = 20.0
+        std_angle = 45.0 * math.pi / 180.0
         std_correspondence = 1 / math.sqrt(2 * math.pi)
 
         Q_t = np.diag([std_distance, std_angle]) ** 2  # covariance matrix of measurement noise

@@ -1,4 +1,4 @@
-import math,random
+import math, random
 import copy
 
 from mcl.pose import Pose
@@ -71,7 +71,7 @@ class Robot(object):
         return_odomertry = copy.deepcopy(self._odometry)
         self._odometry.__init__(self.pose)
 
-        return_odomertry.add_noise()
+        return_odomertry.add_noise_on_current_pose()
 
         return return_odomertry
 
@@ -136,17 +136,14 @@ class Sensor():
         self.angle_range_min = -angular_range / 2
         self.angle_range_max = angular_range / 2
 
-        self.distance_noise_stddev = 0.0
-        self.angular_noise_stddev = 0.0
+        self.distance_noise_stddev = 10.0
+        self.angular_noise_stddev = 22.5 * math.pi / 180.0
 
 
 class Odometry:
     def __init__(self, pose):
         self.previous_pose = copy.deepcopy(pose)
         self.current_pose = pose
-
-        self.transition_noise_stddev = 20.0
-        self.rotation_noise_stddev = 45.0 * math.pi/180.0
 
     def __str__(self):
         return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
@@ -158,7 +155,7 @@ class Odometry:
         delta_odometory = Pose(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
         return delta_odometory
 
-    def add_noise_on_current_pose(self,alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1):
+    def add_noise_on_current_pose(self, alpha1: float = 5.0e-3, alpha2: float = 5.0e-5, alpha3: float = 5.0e-2, alpha4: float = 5.0e-2):
         delta_rotation1 = math.atan2(self.current_pose.y - self.previous_pose.y, self.current_pose.x - self.previous_pose.x) - self.previous_pose.theta
         delta_translation = math.sqrt((self.current_pose.x - self.previous_pose.x) ** 2 + (self.current_pose.y - self.previous_pose.y) ** 2)
         delta_rotation2 = self.current_pose.theta - self.previous_pose.theta - delta_rotation1
@@ -168,4 +165,4 @@ class Odometry:
         delta_rotation2 -= random.gauss(0, math.sqrt(alpha1 * delta_rotation2 ** 2 + alpha2 * delta_translation ** 2))
 
         # update pose
-        self.current_pose = Pose(self.previouse_pose.x + delta_translation * math.cos(self.previouse_pose.theta + delta_rotation1), self.previouse_pose.y + delta_translation * math.sin(self.previouse_pose.theta + delta_rotation1), self.previouse_pose.theta + delta_rotation1 + delta_rotation2)
+        self.current_pose = Pose(self.previous_pose.x + delta_translation * math.cos(self.previous_pose.theta + delta_rotation1), self.previous_pose.y + delta_translation * math.sin(self.previous_pose.theta + delta_rotation1), self.previous_pose.theta + delta_rotation1 + delta_rotation2)

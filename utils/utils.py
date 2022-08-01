@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 output_directory_path = "./data/output/"
+temp_output_directory_path = output_directory_path + "temp/"
 
 
 def rescale_list(list_, min_value, max_value):
@@ -12,41 +13,42 @@ def rescale_list(list_, min_value, max_value):
 
 
 def save_png():
-    counter = png_file_counter(output_directory_path)
-    plt.savefig(output_directory_path + str(counter) + '.png', bbox_inches='tight')
+    counter = file_counter(temp_output_directory_path, "png")
+    plt.savefig(temp_output_directory_path + str(counter) + '.png', bbox_inches='tight')
 
 
-def png_file_counter(directorypath):
+def file_counter(directory_path, filetype):
     counter: int = 0
-    while os.path.exists(directorypath + str(counter) + ".png"):
+    while os.path.exists(directory_path + str(counter) + "." + filetype):
         counter += 1
     return counter
 
 
 def draw_gif():
-    n_image = png_file_counter(output_directory_path)
+    n_image = file_counter(temp_output_directory_path, "png")
+    n_gif = file_counter(output_directory_path, "gif")
     im = list()
     image_list = list()
     for counter in range(n_image):
-        im.append(Image.open(output_directory_path + str(counter) + '.png'))
+        im.append(Image.open(temp_output_directory_path + str(counter) + '.png'))
         image_list.append(im[counter])
-    im[0].save(output_directory_path + 'mcl.gif', save_all=True, append_images=image_list, duration=100, loop=1000)
+    im[0].save(output_directory_path + str(n_gif) + '.gif', save_all=True, append_images=image_list, duration=100, loop=1000)
 
     clear_png_output_directory()
 
 
 def clear_output_directory():
-    for file in glob.glob(output_directory_path + '*', recursive=True):
+    for file in glob.glob(temp_output_directory_path + '*', recursive=True):
         os.remove(file)
 
 
 def clear_png_output_directory():
-    for file in glob.glob(output_directory_path + '*.png', recursive=True):
+    for file in glob.glob(temp_output_directory_path + '*.png', recursive=True):
         os.remove(file)
 
 
 def save_operation(action, counter):
-    operation_file = output_directory_path + 'operation_output.csv'
+    operation_file = temp_output_directory_path + 'operation_output.csv'
     with open(operation_file, 'a') as f:
         f.write(str(action) + ',' + str(counter) + '\n')
         f.close()
