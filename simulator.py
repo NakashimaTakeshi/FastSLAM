@@ -25,7 +25,7 @@ class Simulator(object):
     # The URL below is referenced.
     # https://github.com/ryuichiueda/probrobo_practice/blob/master/monte_carlo_localization/1.monte_calro_localization.ipynb
 
-    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5,estimation_method: str = "MCL",operation_mode : str = "read_file",noise_mode="off",scalefoctor:float=1.0):
+    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5, estimation_method: str = "MCL", operation_mode: str = "read_file", noise_scale=0.0, scalefoctor_motion: float = 1.0, scalefoctor_measurement: float = 1.0):
         """
         Args:
             x_region,y_region : range of simulation 2D field.
@@ -36,14 +36,14 @@ class Simulator(object):
         self._x_region = x_region
         self._y_region = y_region
 
-        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region, range_min=10, range_max=50,noise_mode=noise_mode)
+        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region, range_min=10, range_max=50, noise_scale=noise_scale)
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
         if estimation_method == "MCL":
-            self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region,scalefoctor=scalefoctor)
+            self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region, scalefoctor_motion=scalefoctor_motion, scalefoctor_measurement=scalefoctor_measurement)
         elif estimation_method == "FastSLAM":
-            self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region,scalefoctor=scalefoctor)
+            self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region, scalefoctor_motion=scalefoctor_motion, scalefoctor_measurement=scalefoctor_measurement)
         else:
             raise ValueError('estimation_method must be "MCL" or "FastSLAM".')
 
@@ -134,12 +134,13 @@ class Simulator(object):
             distance = math.sqrt((landmark.x - robot.pose.x) ** 2 + (landmark.y - robot.pose.y) ** 2)
             angle = math.atan2(landmark.y - robot.pose.y, landmark.x - robot.pose.x) - robot.pose.theta
 
-            distance -= random.gauss(0, robot.range_sensor.distance_noise_stddev)
-            angle -= random.gauss(0, robot.range_sensor.angular_noise_stddev)
-
             angle = (angle + math.pi) % (2 * math.pi) - math.pi
 
             if (robot.range_sensor.distance_range_min <= distance <= robot.range_sensor.distance_range_max) and (robot.range_sensor.angle_range_min <= angle <= robot.range_sensor.angle_range_max):
+                distance -= random.gauss(0, robot.range_sensor.distance_noise_stddev)
+                angle -= random.gauss(0, robot.range_sensor.angular_noise_stddev)
+                angle = (angle + math.pi) % (2 * math.pi) - math.pi
+
                 obsabation_set.append(Observation(landmark_id=landmark.id, distance=distance, angle=angle))
 
                 self._observing_landmarks.append(landmark)
@@ -260,25 +261,43 @@ if __name__ == '__main__':
     clear_output_directory()
     args = sys.argv
 
-    if args[1] not in ["MCL", "FastSLAM"]:
-        print("Please enter a valid estimation method: MCL or FastSLAM")
-        exit(1)
-    method = args[1]
+    method = "FastSLAM"
+    operation_mode = "read_file"
+    noise_scale = 1.0
+    scalefoctor_of_motion_probability = 0.0
+    scalefoctor_of_measuement_probability = 0.1
 
-    if args[2] not in ["keyboard", "read_file"]:
-        print("Please enter a valid input method: keyboard or read_file")
-        exit(1)
-    operation_mode = args[2]
+    if len(args) >= 2:
+        if args[1] not in ["MCL", "FastSLAM"]:
+            print("Please enter a valid estimation method: MCL or FastSLAM")
+            exit(1)
+        method = args[1]
 
-    if args[3] not in ["on", "off"]:
-        print("Please enter a valid visualization mode: on or off")
-        exit(1)
-    noise_mode = args[3]
+    if len(args) >= 3:
+        if args[2] not in ["keyboard", "read_file"]:
+            print("Please enter a valid input method: keyboard or read_file")
+            exit(1)
+        operation_mode = args[2]
 
-    try:
-        scalefoctor_of_probability = float(args[4])
-    except:
-        print("Please enter a valid scale factor")
-        exit(1)
+    if len(args) >= 4:
+        try:
+            noise_scale = float(args[3])
+        except:
+            print("Please enter a valid scale factor")
+            exit(1)
 
-    simulator_test = Simulator(estimation_method=method,operation_mode = operation_mode,noise_mode = noise_mode ,scalefoctor=scalefoctor_of_probability)
+    if len(args) >= 5:
+        try:
+            scalefoctor_of_motion_probability = float(args[4])
+        except:
+            print("Please enter a valid scale factor")
+            exit(1)
+
+    if len(args) >= 6:
+        try:
+            scalefoctor_of_measuement_probability = float(args[5])
+        except:
+            print("Please enter a valid scale factor")
+            exit(1)
+
+    simulator_test = Simulator(estimation_method=method, operation_mode=operation_mode, noise_scale=noise_scale, scalefoctor_measurement=scalefoctor_of_measuement_probability, scalefoctor_motion=scalefoctor_of_motion_probability)

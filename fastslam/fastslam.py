@@ -12,38 +12,40 @@ from mcl.mcl import MCL
 class FastSlam(MCL):
     # FastSlam1.0 algorithm
     # This code dose not keep trajectory information of robot
-    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200,scalefoctor:float=1.0):
+    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200, scalefoctor_motion: float = 1.0, scalefoctor_measurement: float = 1.0):
         self._n_particle = n_particle
         self.particle_set = [copy.deepcopy(FastSlamParticle(i, weight=1.0 / self._n_particle)) for i in range(n_particle)]
         self.privious_observed_landmarks = None  # super().__init__(n_particle, x_region, y_region)
 
-        self.scalefoctor = scalefoctor
+        self.scalefoctor_motion = scalefoctor_motion
+        self.scalefoctor_measurement = scalefoctor_measurement
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 13.3 known correspondence FastSLAM1.0 algorithm"
         for i, particle in enumerate(self.particle_set):
             # for particle in self.particle_set:
-            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry,self.scalefoctor)
-            particle._weight *= self._fastslam_measurement_model(particle, observations, landmarks, i,self.scalefoctor)
+            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry, scalefactor=self.scalefoctor_motion)
+            particle._weight *= self._fastslam_measurement_model(particle, observations, landmarks, i, scalefactor=self.scalefoctor_measurement)
 
         print([particle._weight for particle in self.particle_set])
 
         if sum(particle._weight for particle in self.particle_set) == 0:
             for particle in self.particle_set:
                 particle._weight = 1.0 / self._n_particle
-        else:
-            nomalized_weights = [particle._weight / sum(particle._weight for particle in self.particle_set) for particle in self.particle_set]
+            print("reset wight")
+
+        nomalized_weights = [particle._weight / sum(particle._weight for particle in self.particle_set) for particle in self.particle_set]
 
         n_eff = 1.0 / sum(w ** 2 for w in nomalized_weights)
         if n_eff < 0.5 * self._n_particle or sum(nomalized_weights) < 1.0e-15:
             print("resampling")
             self.particle_set = self._fastslam_resampling(self.particle_set)  # print([particle._weight for particle in self.particle_set])
 
-    def _fastslam_measurement_model(self, particle, observations, landmarks, i,scalefoctor=1.0):
+    def _fastslam_measurement_model(self, particle, observations, landmarks, i, scalefactor=1.0):
         # set standard deviation
-        std_distance = 20.0 * scalefoctor
-        std_angle = 45.0 * math.pi / 180.0 * scalefoctor
-        std_correspondence = 1 / math.sqrt(2 * math.pi) * scalefoctor
+        std_distance = 20.0 * scalefactor
+        std_angle = 45.0 * math.pi / 180.0 * scalefactor
+        std_correspondence = 1 / math.sqrt(2 * math.pi) * scalefactor
 
         Q_t = np.diag([std_distance, std_angle]) ** 2  # covariance matrix of measurement noise
 

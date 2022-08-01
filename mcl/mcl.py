@@ -5,10 +5,11 @@ import scipy.stats as stats
 
 from mcl.pose import Pose
 
+
 class MCL:
     # Monte Carlo Localization algorithm
     # This code dose not keep trajectory information of robot
-    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200, scalfoctor:float=1.0):
+    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200, scalefoctor_motion: float = 1.0, scalefoctor_measurement: float = 1.0):
         self._n_particle = n_particle
 
         # original pose of robot
@@ -27,15 +28,16 @@ class MCL:
             self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
         """
 
-        self.scalfoctor = scalfoctor
+        self.scalefoctor_motion = scalefoctor_motion
+        self.scalefoctor_measurement = scalefoctor_measurement
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 8.3.2 MCL algorithm"
         temp_particle_set = []
 
         for particle in self.particle_set:
-            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry, self.scalfoctor)
-            particle._weight *= self._measurement_model(particle, observations, landmarks,self.scalefactor)
+            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry, scalefactor=self.scalefoctor_motion)
+            particle._weight *= self._measurement_model(particle, observations, landmarks, scalefactor=self.scalefoctor_measurement)
             temp_particle_set.append(particle)
 
         # resampling
@@ -50,7 +52,7 @@ class MCL:
         self.particle_set = self._resampling(temp_particle_set)
 
     @staticmethod
-    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1,scalefactor:float=1.0):
+    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1, scalefactor: float = 1.0):
         # This method refer to "Probabilistic Robotics chaper 5.4.2 sample motion model odometory algorithm"
         alpha1 = alpha1 * scalefactor
         alpha2 = alpha2 * scalefactor
@@ -71,12 +73,12 @@ class MCL:
         return pose
 
     @staticmethod
-    def _measurement_model(particle, observations, landmarks,scale_factor: float = 1.0):
+    def _measurement_model(particle, observations, landmarks, scalefactor: float = 1.0):
         # This method refer to "Probabilistic Robotics chaper 6.6.3 landmark model known correspondence algorithm"
 
         # set standard deviation
-        std_distance = 20.0 * scale_factor
-        std_angle = 45. * math.pi/180.0 * scale_factor
+        std_distance = 20.0 * scalefactor
+        std_angle = 45. * math.pi / 180.0 * scalefactor
 
         likelihood = 1.0
         for observation in observations:
@@ -89,17 +91,18 @@ class MCL:
             delta_angle = observation.angle - angle
             delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi  # reset angle value in range -pi to pi
 
-            likelihood *= stats.norm.pdf(observation.distance-distance, 0, std_distance) * stats.norm.pdf(delta_angle , 0, std_angle)
+            likelihood *= stats.norm.pdf(observation.distance - distance, 0, std_distance) * stats.norm.pdf(delta_angle, 0, std_angle)
 
+        if math.isnan(likelihood): likelihood = 0.0
         return likelihood
 
     def _resampling(self, particle_set: list):
         nomalized_weights = [particle._weight / sum(particle._weight for particle in particle_set) for particle in particle_set]
         if sum(nomalized_weights) > 1.0:
-            nomalized_weights = [w/sum(nomalized_weights) for w in nomalized_weights]
+            nomalized_weights = [w / sum(nomalized_weights) for w in nomalized_weights]
 
         rv = stats.multinomial(n=1, p=nomalized_weights)
-        print(sum(nomalized_weights),nomalized_weights)
+        print(f"nomlized weight:{sum(nomalized_weights)}, {nomalized_weights}")
         new_particle_set = []
         for i in range(self._n_particle):
             rvs = rv.rvs(size=1)
@@ -114,8 +117,7 @@ class Particle:
         self._id = id
         self.pose = Pose(x, y, theta)
         self._weight = weight
-        self.parent_id = None
-        # self.features = [] # for FastSLAM1.0
+        self.parent_id = None  # self.features = [] # for FastSLAM1.0
 
     def __str__(self):
         return "id:{}, x:{}, y:{}, theta:{}, weight:{}".format(self._id, self.x, self.y, self.theta, self._weight)
