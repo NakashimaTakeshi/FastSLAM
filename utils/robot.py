@@ -10,7 +10,7 @@ class Robot(object):
     and provides methods of operate atoribute avabu.
     """
 
-    def __init__(self, pose: list = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100, range_min: int = 10, range_max: int = 50):
+    def __init__(self, pose: list = [0.0, 0.0, 0.0], x_region: int = 100, y_region: int = 100, range_min: int = 10, range_max: int = 50, noise_mode = "off"):
         """
         Args:
             pose: initial pose of robot.
@@ -20,14 +20,14 @@ class Robot(object):
         self._y_restriction = y_region / 2
 
         self.pose = ActualPose(x=pose[0], y=pose[1], theta=pose[2], x_restriction=self._x_restriction, y_restriction=self._y_restriction)
-        self.range_sensor = Sensor(range_min, range_max)
+        self.range_sensor = Sensor(range_min=range_min, range_max=range_max,noise_mode=noise_mode)
 
         self.linear_speed_min = 0.1
         self.linear_speed_max = 10.0
         self.angular_speed_min = 1.0 * math.pi / 180.0
         self.angular_speed_max = 30.0 * math.pi / 180.0
 
-        self._odometry = Odometry(self.pose)
+        self._odometry = Odometry(pose=self.pose,noise_mode=noise_mode)
 
     def move_forward(self, counter: int = 1):
         linear_speed = counter * self.linear_speed_min
@@ -123,7 +123,7 @@ class ActualPose(Pose):
 
 
 class Sensor():
-    def __init__(self, range_min: float = 10.0, range_max: float = 50.0, angular_range: float = 360.0):
+    def __init__(self, range_min: float = 10.0, range_max: float = 50.0, angular_range: float = 360.0, noise_mode:str = "off"):
         if range_max <= range_min:
             raise ValueError('range_max must be larger than range_min.')
         if not 0 <= angular_range <= 360:
@@ -136,14 +136,34 @@ class Sensor():
         self.angle_range_min = -angular_range / 2
         self.angle_range_max = angular_range / 2
 
-        self.distance_noise_stddev = 10.0
-        self.angular_noise_stddev = 22.5 * math.pi / 180.0
+        if noise_mode == "on":
+            self.distance_noise_stddev = 10.0
+            self.angular_noise_stddev = 22.5 * math.pi / 180.0
+        elif noise_mode == "off":
+            self.distance_noise_stddev = 0.0
+            self.angular_noise_stddev = 0.0
+        else:
+            raise ValueError('noise_mode must be either "on" or "off"')
 
 
 class Odometry:
-    def __init__(self, pose):
+    def __init__(self, pose, noise_mode = "off"):
         self.previous_pose = copy.deepcopy(pose)
         self.current_pose = pose
+
+        if noise_mode == "on":
+            self.alpha1 = 10.0
+            self.alpha2=5.0e-5
+            self.alpha3=5.0e-2
+            self.alpha4=5.0e-2
+        elif noise_mode == "off":
+            self.alpha1 = 0.0
+            self.alpha2=0.0
+            self.alpha3=0.0
+            self.alpha4=0.0
+        else:
+            raise ValueError('noise_mode must be either "on" or "off"')
+
 
     def __str__(self):
         return "delta_x:{}, delta_y:{}, delta_theta:{}".format(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
@@ -155,14 +175,14 @@ class Odometry:
         delta_odometory = Pose(self.current_pose.x - self.previous_pose.x, self.current_pose.y - self.previous_pose.y, self.current_pose.theta - self.previous_pose.theta)
         return delta_odometory
 
-    def add_noise_on_current_pose(self, alpha1: float = 5.0e-3, alpha2: float = 5.0e-5, alpha3: float = 5.0e-2, alpha4: float = 5.0e-2):
+    def add_noise_on_current_pose(self):
         delta_rotation1 = math.atan2(self.current_pose.y - self.previous_pose.y, self.current_pose.x - self.previous_pose.x) - self.previous_pose.theta
         delta_translation = math.sqrt((self.current_pose.x - self.previous_pose.x) ** 2 + (self.current_pose.y - self.previous_pose.y) ** 2)
         delta_rotation2 = self.current_pose.theta - self.previous_pose.theta - delta_rotation1
 
-        delta_rotation1 -= random.gauss(0, math.sqrt(alpha1 * delta_rotation1 ** 2 + alpha2 * delta_translation ** 2))
-        delta_translation -= random.gauss(0, math.sqrt(alpha3 * delta_translation ** 2 + alpha4 * delta_rotation1 ** 2 + alpha4 * delta_rotation2 ** 2))
-        delta_rotation2 -= random.gauss(0, math.sqrt(alpha1 * delta_rotation2 ** 2 + alpha2 * delta_translation ** 2))
+        delta_rotation1 -= random.gauss(0, math.sqrt(self.alpha1 * delta_rotation1 ** 2 + self.alpha2 * delta_translation ** 2))
+        delta_translation -= random.gauss(0, math.sqrt(self.alpha3 * delta_translation ** 2 + self.alpha4 * delta_rotation1 ** 2 + self.alpha4 * delta_rotation2 ** 2))
+        delta_rotation2 -= random.gauss(0, math.sqrt(self.alpha1 * delta_rotation2 ** 2 + self.alpha2 * delta_translation ** 2))
 
         # update pose
         self.current_pose = Pose(self.previous_pose.x + delta_translation * math.cos(self.previous_pose.theta + delta_rotation1), self.previous_pose.y + delta_translation * math.sin(self.previous_pose.theta + delta_rotation1), self.previous_pose.theta + delta_rotation1 + delta_rotation2)

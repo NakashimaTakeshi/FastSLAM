@@ -8,7 +8,7 @@ from mcl.pose import Pose
 class MCL:
     # Monte Carlo Localization algorithm
     # This code dose not keep trajectory information of robot
-    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200):
+    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200, scalfoctor:float=1.0):
         self._n_particle = n_particle
 
         # original pose of robot
@@ -27,13 +27,15 @@ class MCL:
             self.particle_set.append(Particle(i, x, y, theta, 1.0 / self._n_particle))
         """
 
+        self.scalfoctor = scalfoctor
+
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 8.3.2 MCL algorithm"
         temp_particle_set = []
 
         for particle in self.particle_set:
-            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry)
-            particle._weight *= self._measurement_model(particle, observations, landmarks)
+            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry, self.scalfoctor)
+            particle._weight *= self._measurement_model(particle, observations, landmarks,self.scalefactor)
             temp_particle_set.append(particle)
 
         # resampling
@@ -48,8 +50,12 @@ class MCL:
         self.particle_set = self._resampling(temp_particle_set)
 
     @staticmethod
-    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1):
+    def _sample_motion_model_odometory(previouse_pose, odometry, alpha1: float = 1.0e-2, alpha2: float = 1.0e-4, alpha3: float = 1.0e-1, alpha4: float = 1.0e-1,scalefactor:float=1.0):
         # This method refer to "Probabilistic Robotics chaper 5.4.2 sample motion model odometory algorithm"
+        alpha1 = alpha1 * scalefactor
+        alpha2 = alpha2 * scalefactor
+        alpha3 = alpha3 * scalefactor
+        alpha4 = alpha4 * scalefactor
 
         delta_rotation1 = math.atan2(odometry.current_pose.y - odometry.previous_pose.y, odometry.current_pose.x - odometry.previous_pose.x) - odometry.previous_pose.theta
         delta_translation = math.sqrt((odometry.current_pose.x - odometry.previous_pose.x) ** 2 + (odometry.current_pose.y - odometry.previous_pose.y) ** 2)
@@ -65,12 +71,12 @@ class MCL:
         return pose
 
     @staticmethod
-    def _measurement_model(particle, observations, landmarks):
+    def _measurement_model(particle, observations, landmarks,scale_factor: float = 1.0):
         # This method refer to "Probabilistic Robotics chaper 6.6.3 landmark model known correspondence algorithm"
 
         # set standard deviation
-        std_distance = 20.0
-        std_angle = 45. * math.pi/180.0
+        std_distance = 20.0 * scale_factor
+        std_angle = 45. * math.pi/180.0 * scale_factor
 
         likelihood = 1.0
         for observation in observations:

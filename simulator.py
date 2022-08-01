@@ -25,7 +25,7 @@ class Simulator(object):
     # The URL below is referenced.
     # https://github.com/ryuichiueda/probrobo_practice/blob/master/monte_carlo_localization/1.monte_calro_localization.ipynb
 
-    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5,estimation_method: str = "MCL",):
+    def __init__(self, x_region: int = 200, y_region: int = 200, n_landmark: int = 5,estimation_method: str = "MCL",operation_mode : str = "read_file",noise_mode="off",scalefoctor:float=1.0):
         """
         Args:
             x_region,y_region : range of simulation 2D field.
@@ -36,22 +36,26 @@ class Simulator(object):
         self._x_region = x_region
         self._y_region = y_region
 
-        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region, range_min=10, range_max=50)
+        self._robot = Robot(pose=[0.0, 0.0, 0.0], x_region=self._x_region, y_region=self._y_region, range_min=10, range_max=50,noise_mode=noise_mode)
         self._generate_random_landmarks(n_landmark)
         self._observing_landmarks = []
 
         if estimation_method == "MCL":
-            self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+            self._estimation_method = MCL(n_particle=30, x_region=self._x_region, y_region=self._y_region,scalefoctor=scalefoctor)
         elif estimation_method == "FastSLAM":
-            self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region)
+            self._estimation_method = FastSlam(n_particle=30, x_region=self._x_region, y_region=self._y_region,scalefoctor=scalefoctor)
         else:
             raise ValueError('estimation_method must be "MCL" or "FastSLAM".')
 
         self._step_counter = 0
 
         # select operation mode
-        # self._launch_operator_interface()
-        self._read_operation_data()
+        if operation_mode == "keyboard":
+            self._launch_operator_interface()
+        elif operation_mode == "read_file":
+            self._read_operation_data()
+        else:
+            raise ValueError('operation_mode must be "keyboard" or "read_file".')
 
     def _generate_random_landmarks(self, n: int):
         self._landmarks = []
@@ -261,4 +265,20 @@ if __name__ == '__main__':
         exit(1)
     method = args[1]
 
-    simulator_test = Simulator(n_landmark=5,method=method)
+    if args[2] not in ["keyboard", "read_file"]:
+        print("Please enter a valid input method: keyboard or read_file")
+        exit(1)
+    operation_mode = args[2]
+
+    if args[3] not in ["on", "off"]:
+        print("Please enter a valid visualization mode: on or off")
+        exit(1)
+    noise_mode = args[3]
+
+    try:
+        scalefoctor_of_probability = float(args[4])
+    except:
+        print("Please enter a valid scale factor")
+        exit(1)
+
+    simulator_test = Simulator(estimation_method=method,operation_mode = operation_mode,noise_mode = noise_mode ,scalefoctor=scalefoctor_of_probability)

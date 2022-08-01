@@ -12,17 +12,19 @@ from mcl.mcl import MCL
 class FastSlam(MCL):
     # FastSlam1.0 algorithm
     # This code dose not keep trajectory information of robot
-    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200):
+    def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200,scalefoctor:float=1.0):
         self._n_particle = n_particle
         self.particle_set = [copy.deepcopy(FastSlamParticle(i, weight=1.0 / self._n_particle)) for i in range(n_particle)]
         self.privious_observed_landmarks = None  # super().__init__(n_particle, x_region, y_region)
+
+        self.scalefoctor = scalefoctor
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 13.3 known correspondence FastSLAM1.0 algorithm"
         for i, particle in enumerate(self.particle_set):
             # for particle in self.particle_set:
-            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry)
-            particle._weight *= self._fastslam_measurement_model(particle, observations, landmarks, i)
+            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry,self.scalefoctor)
+            particle._weight *= self._fastslam_measurement_model(particle, observations, landmarks, i,self.scalefoctor)
 
         print([particle._weight for particle in self.particle_set])
 
@@ -37,11 +39,11 @@ class FastSlam(MCL):
             print("resampling")
             self.particle_set = self._fastslam_resampling(self.particle_set)  # print([particle._weight for particle in self.particle_set])
 
-    def _fastslam_measurement_model(self, particle, observations, landmarks, i):
+    def _fastslam_measurement_model(self, particle, observations, landmarks, i,scalefoctor=1.0):
         # set standard deviation
-        std_distance = 20.0
-        std_angle = 45.0 * math.pi / 180.0
-        std_correspondence = 1 / math.sqrt(2 * math.pi)
+        std_distance = 20.0 * scalefoctor
+        std_angle = 45.0 * math.pi / 180.0 * scalefoctor
+        std_correspondence = 1 / math.sqrt(2 * math.pi) * scalefoctor
 
         Q_t = np.diag([std_distance, std_angle]) ** 2  # covariance matrix of measurement noise
 
