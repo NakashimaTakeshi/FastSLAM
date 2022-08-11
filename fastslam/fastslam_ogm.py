@@ -1,4 +1,4 @@
-import math, random
+import math
 import copy
 
 import numpy as np
@@ -15,16 +15,12 @@ class FastSlam(MCL):
     def __init__(self, n_particle: int = 30, x_region: int = 200, y_region: int = 200, scalefoctor_motion: float = 1.0, scalefoctor_measurement: float = 1.0):
         self._n_particle = n_particle
         self.particle_set = [copy.deepcopy(FastSlamParticle(i, weight=1.0 / self._n_particle)) for i in range(n_particle)]
-        self.privious_observed_landmarks = None  # super().__init__(n_particle, x_region, y_region)
-
-        self.scalefoctor_motion = scalefoctor_motion
-        self.scalefoctor_measurement = scalefoctor_measurement
 
     def update_particles(self, odometry, observations, landmarks):
         # This method refer to "Probabilistic Robotics chaper 13.3 known correspondence FastSLAM1.0 algorithm"
         for i, particle in enumerate(self.particle_set):
             # for particle in self.particle_set:
-            particle.pose = self._sample_motion_model_odometory(particle.pose, odometry, scalefactor=self.scalefoctor_motion)
+            particle.pose = particle.sample_motion_model_odometory(odometry)
             particle._weight *= self._fastslam_measurement_model(particle, observations, landmarks, i, scalefactor=self.scalefoctor_measurement)
 
         print([particle._weight for particle in self.particle_set])
@@ -132,7 +128,7 @@ class FastSlam(MCL):
 class FastSlamParticle(Particle):
     def __init__(self, id: int, x: float = 0.0, y: float = 0.0, theta: float = 0.0, weight: float = 1.0, features: list = []):
         super().__init__(id, x, y, theta, weight)
-        self._features = features
+        self._map = features
 
 
 class FastSlamFeature:

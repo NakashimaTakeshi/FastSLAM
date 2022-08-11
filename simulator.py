@@ -10,7 +10,7 @@ import keyboard
 
 from utils.robot import Robot
 from mcl.mcl import MCL
-from fastslam.fastslam import FastSlam
+from fastslam.fastslam_ogm import FastSlam
 from utils.observation import Observation
 from utils.landmark import Landmark
 from utils.utils import *
@@ -107,7 +107,7 @@ class Simulator(object):
             el_c = np.sqrt(stats.chi2.ppf(el_prob, 2))
 
             max_weight_particle_id = self._estimation_method.particle_set.index(max([particle for particle in self._estimation_method.particle_set], key=lambda particle: particle._weight))
-            for feature in self._estimation_method.particle_set[max_weight_particle_id]._features:
+            for feature in self._estimation_method.particle_set[max_weight_particle_id]._map:
                 lmda, vec = np.linalg.eig(feature._covariance_matrix[:2, :2])
                 el_width, el_height = 2 * el_c * np.sqrt(lmda)
                 el_angle = np.rad2deg(np.arctan2(vec[1, 0], vec[0, 0]))

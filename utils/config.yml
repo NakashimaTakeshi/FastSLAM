@@ -1,0 +1,55 @@
+# configration file for the project
+simulation:
+  operation_mode: 'csv_file'
+  area:
+    width: 200
+    height: 200
+    origin:
+      x: 0
+      y: 0
+      z: 0
+  map:
+    format: "landmark"
+    landmark_num: 10
+
+  robot:
+    sensor:
+      type: range
+      min_range: 10
+      max_range: 50
+      angle_resolution: 1
+      field_of_view: 360
+      distance_noise:
+          mean: 0
+          stddev: 0.0
+      angle_noise:
+          mean: 0
+          stddev: 0.0
+
+    motion:
+        noise_params:
+          alpha1: 0.0
+          alpha2: 0.0
+          alpha3: 0.0
+          alpha4: 0.0
+
+
+state_estimation:
+  method: "FastSLAM"
+
+  initial_pose:
+    "known"
+    width: 200
+    height: 200
+
+  particle_num: 30
+
+  motion_model_parameter:
+    alpha1: 1.0e-2
+    alpha2: 1.0e-4
+    alpha3: 1.0e-1
+    alpha4: 1.0e-1
+
+  measurement_model_parameter:
+    range_std: 20.0
+    angle_std: 45.0
